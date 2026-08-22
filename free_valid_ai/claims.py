@@ -265,13 +265,13 @@ def _receipt_body(
     if verifier == claim["author"]["author_id"]:
         raise ClaimContractError("verifier_must_differ_from_claim_author")
     checked_evidence = [_evidence(item) for item in evidence]
-    if not checked_evidence:
-        raise ClaimContractError("evidence_must_not_be_empty")
     when = _moment(observed_at, "receipt_observed_at")
     if when < _moment(claim["observed_at"], "claim_observed_at"):
         raise ClaimContractError("receipt_cannot_precede_claim")
     if result not in RESULTS:
         raise ClaimContractError("result_invalid")
+    if not checked_evidence and result != "BLOCKED":
+        raise ClaimContractError("evidence_must_not_be_empty_unless_blocked")
     if not isinstance(sequence, int) or isinstance(sequence, bool) or sequence < 1:
         raise ClaimContractError("sequence_must_be_positive_integer")
     if previous_receipt_hash is not None:
