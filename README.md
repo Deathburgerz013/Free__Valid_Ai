@@ -16,6 +16,14 @@ differ from the claim author. Receipts form a hash-bound append-only chain.
 The contract verifies record integrity and declared boundaries. It does not
 claim that recording a check proves timeless truth.
 
+## First deterministic check
+
+`run_source_sha256_check()` computes its own result from directly presented
+bytes. The caller cannot choose the result. It first verifies that the bytes
+match the source identity bound by the claim, then compares the scoped expected
+digest. Missing bytes are `BLOCKED`; identity mismatch is `UNKNOWN`; only
+identity-matching bytes can produce `HELD` or `CONTRADICTED`.
+
 All records retain:
 
 ```text
