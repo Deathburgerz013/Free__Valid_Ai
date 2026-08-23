@@ -46,3 +46,30 @@ deletion_authority=NONE
 python -m pip install -e ".[dev]"
 python -m pytest -q
 ```
+## Local terminal chat
+
+Talk to an Ollama model running on your own computer:
+
+```bash
+python -m pip install -e ".[dev]"
+free-valid-ai chat --model llama3.2
+```
+
+The initial chat surface accepts only an HTTP loopback Ollama endpoint. It has
+no cloud fallback, API-key path, telemetry, persistence, file access, command
+execution, write authority, or claim-verification authority. Conversation
+history exists only in memory until the process exits.
+
+CPU-only execution is the default (`--num-gpu 0`) so Ollama hardware
+autodetection cannot silently select a GPU. A user may explicitly choose a
+non-negative GPU-layer count.
+
+The command supplies a program-generated `RUNTIME_ENVELOPE_V1` system message
+on every turn. It identifies the selected model, local loopback transport,
+explicit compute selection, and absent write/execution authority. These are
+external runtime facts; model prose is not the authority for them.
+
+The user-facing assistant identity is **Simulator**. The selected local model
+is its replaceable language carrier, not the assistant's identity. Runtime
+authority fields explicitly bind restrictions to Simulator and do not infer or
+limit the user's authority.
