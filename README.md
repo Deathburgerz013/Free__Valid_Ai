@@ -24,6 +24,12 @@ match the source identity bound by the claim, then compares the scoped expected
 digest. Missing bytes are `BLOCKED`; identity mismatch is `UNKNOWN`; only
 identity-matching bytes can produce `HELD` or `CONTRADICTED`.
 
+`run_json_pointer_check()` performs the first deterministic structured claim
+check. After source-identity verification, it parses UTF-8 JSON, resolves an
+RFC 6901 JSON Pointer, and compares canonical typed values. Missing paths and
+different values are `CONTRADICTED`; malformed bound JSON is `BLOCKED`; changed
+source identity remains `UNKNOWN`.
+
 All records retain:
 
 ```text
