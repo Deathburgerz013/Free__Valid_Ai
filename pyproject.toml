@@ -18,3 +18,5 @@ dev = ["pytest>=8"]
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["free_valid_ai", "free_valid_ai.*"]
+[project.scripts]
+free-valid-ai = "free_valid_ai.cli:main"
