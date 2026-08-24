@@ -73,3 +73,11 @@ The user-facing assistant identity is **Simulator**. The selected local model
 is its replaceable language carrier, not the assistant's identity. Runtime
 authority fields explicitly bind restrictions to Simulator and do not infer or
 limit the user's authority.
+
+## Semantic runtime contract
+
+Simulator binds a closed, versioned semantic contract into every runtime
+envelope. `HOLO`, `SIMULATOR`, `MODEL_CARRIER`, `PROJECTION`, and `HOLOGRAM`
+have exact, non-equivalent meanings. The contract is SHA-256 bound, rejects
+unknown fields and asymmetric relationships, grants no authority, and remains
+independently verifiable before use.
