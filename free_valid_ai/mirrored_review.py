@@ -11,10 +11,22 @@ from typing import Any, Mapping
 REVIEW_TYPE = "free_valid_ai_mirrored_turn_review"
 REVIEW_VERSION = 1
 ASSESSMENTS = {"CLEAN", "CORRECTION_REQUIRED", "UNKNOWN"}
+MIRRORED_REVIEW_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "assessment": {
+            "type": "string",
+            "enum": ["CLEAN", "CORRECTION_REQUIRED", "UNKNOWN"],
+        },
+        "issues": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": ["assessment", "issues"],
+    "additionalProperties": False,
+}
 _FIELDS = {
     "type", "version", "mode", "independence_claimed", "model_carrier",
     "received_turn_hash", "draft_sha256", "assessment", "issues",
-    "raw_review_sha256", "accepted", "truth_claimed", "write_authority",
+    "raw_review_sha256", "review_schema_sha256", "accepted", "truth_claimed", "write_authority",
     "execution_authority", "deletion_authority", "review_hash",
 }
 _AUTHORITY = {
@@ -37,6 +49,9 @@ def _canonical(value: object) -> bytes:
 
 def _hash(value: object) -> str:
     return hashlib.sha256(_canonical(value)).hexdigest()
+
+
+MIRRORED_REVIEW_SCHEMA_SHA256 = _hash(MIRRORED_REVIEW_SCHEMA)
 
 
 def _sha(value: Any, label: str) -> str:
@@ -77,6 +92,7 @@ def parse_mirrored_review(
         "received_turn_hash": received_turn_hash, "draft_sha256": draft_sha256,
         "assessment": assessment, "issues": issues,
         "raw_review_sha256": hashlib.sha256(raw.encode()).hexdigest(), **_AUTHORITY,
+        "review_schema_sha256": MIRRORED_REVIEW_SCHEMA_SHA256,
     }
     receipt = {**body, "review_hash": _hash(body)}
     verify_mirrored_review(receipt)
@@ -99,8 +115,10 @@ def verify_mirrored_review(value: Mapping[str, Any]) -> bool:
         raise MirroredReviewError("clean_review_cannot_have_issues")
     if item["assessment"] == "CORRECTION_REQUIRED" and not item["issues"]:
         raise MirroredReviewError("correction_review_requires_issues")
-    for field in ("received_turn_hash", "draft_sha256", "raw_review_sha256"):
+    for field in ("received_turn_hash", "draft_sha256", "raw_review_sha256", "review_schema_sha256"):
         _sha(item[field], field)
+    if item["review_schema_sha256"] != MIRRORED_REVIEW_SCHEMA_SHA256:
+        raise MirroredReviewError("review_schema_mismatch")
     for field, expected in _AUTHORITY.items():
         if item[field] != expected:
             raise MirroredReviewError(f"review_{field}_invalid")

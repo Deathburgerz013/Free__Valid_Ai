@@ -36,13 +36,35 @@ class OllamaTransport:
             raise ValueError("num_gpu must be a non-negative integer")
 
     def chat(self, model: str, messages: Iterable[Mapping[str, str]]) -> str:
+        return self._request(model, messages)
+
+    def chat_structured(
+        self,
+        model: str,
+        messages: Iterable[Mapping[str, str]],
+        schema: Mapping[str, object],
+    ) -> str:
+        """Request local constrained JSON; response is still verified by caller."""
+        if not isinstance(schema, Mapping) or not schema:
+            raise ValueError("structured response schema must be a non-empty object")
+        return self._request(model, messages, response_format=dict(schema))
+
+    def _request(
+        self,
+        model: str,
+        messages: Iterable[Mapping[str, str]],
+        response_format: Mapping[str, object] | None = None,
+    ) -> str:
+        body = {
+            "model": model,
+            "messages": list(messages),
+            "stream": False,
+            "options": {"num_gpu": self.num_gpu},
+        }
+        if response_format is not None:
+            body["format"] = response_format
         payload = json.dumps(
-            {
-                "model": model,
-                "messages": list(messages),
-                "stream": False,
-                "options": {"num_gpu": self.num_gpu},
-            },
+            body,
             ensure_ascii=False,
             separators=(",", ":"),
         ).encode("utf-8")
