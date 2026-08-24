@@ -90,3 +90,11 @@ explicit decisions `UNCHANGED`, `CORRECTED`, `BLOCKED`, and `UNKNOWN`. A
 correction must name a hash-bound basis; failed or unknown checks cannot release
 output. This boundary calls no model and grants no truth, acceptance, write,
 execution, or deletion authority.
+
+## Mirrored turn review
+
+Terminal chat enables one same-carrier review by default. The receipt says
+`mode=MIRRORED` and `independence_claimed=false`. A clean review releases the
+draft unchanged. Identified issues permit one correction call. Malformed or
+`UNKNOWN` review blocks presentation; deterministic failures outrank model
+prose. Use `--no-mirror-review` to explicitly disable the extra local calls.

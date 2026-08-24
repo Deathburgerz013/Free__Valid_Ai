@@ -23,12 +23,18 @@ from free_valid_ai.turn_boundary import (
     verify_interception,
     verify_received_turn,
 )
+from free_valid_ai.mirrored_review import (
+    MirroredReviewError,
+    parse_mirrored_review,
+    verify_mirrored_review,
+)
 
 __all__ = [
     "ClaimContractError",
     "DEFAULT_SEMANTIC_CONTRACT",
     "SemanticContractError",
     "TurnBoundaryError",
+    "MirroredReviewError",
     "assess_claim",
     "create_claim",
     "create_semantic_contract",
@@ -36,11 +42,13 @@ __all__ = [
     "create_received_turn",
     "create_verification_receipt",
     "relation",
+    "parse_mirrored_review",
     "run_source_sha256_check",
     "run_json_pointer_check",
     "verify_claim",
     "verify_semantic_contract",
     "verify_interception",
     "verify_received_turn",
+    "verify_mirrored_review",
     "verify_verification_receipt",
 ]
