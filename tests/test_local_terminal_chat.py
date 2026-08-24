@@ -94,6 +94,28 @@ def test_ollama_request_has_no_credentials_and_disables_stream(monkeypatch) -> N
     assert observed["payload"]["options"] == {"num_gpu": 0}
 
 
+def test_structured_ollama_request_binds_format_schema(monkeypatch) -> None:
+    observed = {}
+
+    class Response:
+        def __enter__(self): return self
+        def __exit__(self, *args): return None
+        def read(self): return b'{"message":{"content":"{\\"assessment\\":\\"CLEAN\\",\\"issues\\":[]}"}}'
+
+    def fake_urlopen(request, timeout):
+        observed["payload"] = json.loads(request.data)
+        return Response()
+
+    monkeypatch.setattr("free_valid_ai.local_model.urlopen", fake_urlopen)
+    schema = {"type": "object", "additionalProperties": False}
+    result = OllamaTransport().chat_structured(
+        "model", [{"role": "user", "content": "review"}], schema
+    )
+    assert json.loads(result)["assessment"] == "CLEAN"
+    assert observed["payload"]["format"] == schema
+    assert observed["payload"]["stream"] is False
+
+
 def test_terminal_exits_without_persistence() -> None:
     inputs = iter(["hello", "/exit"])
     output = []

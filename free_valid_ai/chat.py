@@ -8,7 +8,11 @@ import json
 from typing import Callable
 
 from .local_model import ChatTransport, LocalModelError
-from .mirrored_review import MirroredReviewError, parse_mirrored_review
+from .mirrored_review import (
+    MIRRORED_REVIEW_SCHEMA,
+    MirroredReviewError,
+    parse_mirrored_review,
+)
 from .turn_boundary import create_interception, create_received_turn
 
 
@@ -58,7 +62,10 @@ class ChatSession:
         review_prompt = json.dumps(
             {"received_turn_hash": received["received_turn_hash"],
              "question": question, "draft": draft}, sort_keys=True)
-        raw = self.transport.chat(self.model, [
+        review_messages = []
+        if self.runtime_envelope is not None:
+            review_messages.append({"role": "system", "content": self.runtime_envelope})
+        review_messages.extend([
             {"role": "system", "content": (
                 "MIRRORED_REVIEW_V1. You are the same model carrier, not an independent "
                 "verifier. Inspect the draft for contradiction, unsupported runtime claims, "
@@ -67,6 +74,12 @@ class ChatSession:
             )},
             {"role": "user", "content": review_prompt},
         ])
+        structured = getattr(self.transport, "chat_structured", None)
+        raw = (
+            structured(self.model, review_messages, MIRRORED_REVIEW_SCHEMA)
+            if callable(structured)
+            else self.transport.chat(self.model, review_messages)
+        )
         try:
             review = parse_mirrored_review(
                 raw, model_carrier=self.model,
@@ -96,12 +109,18 @@ class ChatSession:
         else:
             correction_prompt = json.dumps(
                 {"question": question, "draft": draft, "review": review}, sort_keys=True)
-            final = self.transport.chat(self.model, [
+            correction_messages = []
+            if self.runtime_envelope is not None:
+                correction_messages.append(
+                    {"role": "system", "content": self.runtime_envelope}
+                )
+            correction_messages.extend([
                 {"role": "system", "content": (
                     "BOUNDED_CORRECTION_V1. Apply only the listed issues. Return only the "
                     "corrected answer. Do not claim the mirrored review was independent."
                 )}, {"role": "user", "content": correction_prompt},
             ])
+            final = self.transport.chat(self.model, correction_messages)
             if not final.strip() or final == draft:
                 checks.append({"check_id": "correction_changed_nonempty", "result": "FAIL",
                                "evidence_sha256": hashlib.sha256(final.encode()).hexdigest()})

@@ -98,3 +98,6 @@ Terminal chat enables one same-carrier review by default. The receipt says
 draft unchanged. Identified issues permit one correction call. Malformed or
 `UNKNOWN` review blocks presentation; deterministic failures outrank model
 prose. Use `--no-mirror-review` to explicitly disable the extra local calls.
+The Ollama review call carries a JSON Schema in its `format` field, and the
+schema hash is bound into the review receipt. Returned JSON is still parsed and
+verified locally; constrained generation is not treated as verification.
