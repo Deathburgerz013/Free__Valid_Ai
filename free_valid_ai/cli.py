@@ -48,6 +48,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="loopback Ollama /api/chat endpoint",
     )
     chat.add_argument(
+        "--no-mirror-review", action="store_false", dest="mirror_review",
+        help="disable the default same-carrier mirrored review",
+    )
+    chat.add_argument(
         "--num-gpu",
         type=int,
         default=0,
@@ -69,6 +73,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 transport=transport,
                 assistant_name="Simulator",
                 runtime_envelope=envelope,
+                mirrored_review=args.mirror_review,
             )
         )
     raise AssertionError("unreachable command")
