@@ -81,3 +81,12 @@ envelope. `HOLO`, `SIMULATOR`, `MODEL_CARRIER`, `PROJECTION`, and `HOLOGRAM`
 have exact, non-equivalent meanings. The contract is SHA-256 bound, rejects
 unknown fields and asymmetric relationships, grants no authority, and remains
 independently verifiable before use.
+
+## Received and intercepted turns
+
+`free_valid_ai.turn_boundary` binds exact incoming bytes before interpretation
+and holds proposed output before presentation. Release is limited to the
+explicit decisions `UNCHANGED`, `CORRECTED`, `BLOCKED`, and `UNKNOWN`. A
+correction must name a hash-bound basis; failed or unknown checks cannot release
+output. This boundary calls no model and grants no truth, acceptance, write,
+execution, or deletion authority.
