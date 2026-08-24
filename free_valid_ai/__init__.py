@@ -16,19 +16,31 @@ from free_valid_ai.semantics import (
     relation,
     verify_semantic_contract,
 )
+from free_valid_ai.turn_boundary import (
+    TurnBoundaryError,
+    create_interception,
+    create_received_turn,
+    verify_interception,
+    verify_received_turn,
+)
 
 __all__ = [
     "ClaimContractError",
     "DEFAULT_SEMANTIC_CONTRACT",
     "SemanticContractError",
+    "TurnBoundaryError",
     "assess_claim",
     "create_claim",
     "create_semantic_contract",
+    "create_interception",
+    "create_received_turn",
     "create_verification_receipt",
     "relation",
     "run_source_sha256_check",
     "run_json_pointer_check",
     "verify_claim",
     "verify_semantic_contract",
+    "verify_interception",
+    "verify_received_turn",
     "verify_verification_receipt",
 ]
