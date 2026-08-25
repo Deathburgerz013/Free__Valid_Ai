@@ -101,3 +101,17 @@ prose. Use `--no-mirror-review` to explicitly disable the extra local calls.
 The Ollama review call carries a JSON Schema in its `format` field, and the
 schema hash is bound into the review receipt. Returned JSON is still parsed and
 verified locally; constrained generation is not treated as verification.
+
+## Frozen check index
+
+`free_valid_ai.frozen_index` records the exact verification procedures admitted
+for declared scopes. Entries bind procedure identity, procedure hash, detectable
+differences, evidence requirements, dependencies, outcomes, failure behavior,
+version, and supersession. The index is closed, canonical, hash-bound, and
+append-only across versions; extending it preserves every prior entry byte for
+byte and binds the previous index hash.
+
+Admission means only that a procedure is a member of this index. It does not
+make the procedure's conclusions true, grant acceptance, or provide write,
+execution, or deletion authority. The same-carrier mirrored review is recorded
+only as `MIRRORED_EVIDENCE_ONLY` with `independence_claimed=false`.
