@@ -8,23 +8,46 @@ from free_valid_ai.directional_comparator import (
     compare_directional,
     verify_directional_comparison,
 )
+from free_valid_ai import create_claim, run_source_sha256_check
 from free_valid_ai.frozen_index import DEFAULT_FROZEN_CHECK_INDEX
 
 
-def digest(value: str) -> str:
-    return hashlib.sha256(value.encode()).hexdigest()
+def digest(value: bytes) -> str:
+    return hashlib.sha256(value).hexdigest()
+
+
+def bound_evidence(name: str):
+    observed = name.encode()
+    claim = create_claim(
+        statement=f"Evidence {name} has its declared digest.",
+        scope={"check": {"type": "source_sha256_equals", "version": 1,
+                         "source_id": name, "expected_sha256": digest(observed)}},
+        conditions=["the identified bytes are presented directly"],
+        sources=[{
+            "source_id": name, "locator": f"fixture://{name}",
+            "creator_id": "test", "creator_name": "Test",
+            "license": "TEST-V1", "content_sha256": digest(observed),
+            "usage_terms": {
+                "training_use": "PROHIBITED", "commercial_use": "PROHIBITED",
+                "redistribution": "PERMITTED", "attribution_required": True,
+                "compensation_terms": "None", "consent_receipt": "test-consent",
+            },
+        }],
+        author={"author_id": "test", "display_name": "Test"},
+        observed_at="2026-08-26T00:00:00Z",
+    )
+    receipt = run_source_sha256_check(
+        claim=claim, verifier_id="deterministic-sha256-tool",
+        observed_at="2026-08-26T00:01:00Z", observed_bytes=observed,
+    )
+    return {
+        "check_id": "source_sha256_equals", "check_version": 1,
+        "claim": claim, "observed_bytes_hex": observed.hex(), "receipt": receipt,
+    }
 
 
 def evidence(*ids: str):
-    return {
-        item: {
-            "check_id": "source_sha256_equals",
-            "check_version": 1,
-            "result": "PASS",
-            "receipt_sha256": digest(item),
-        }
-        for item in ids
-    }
+    return {item: bound_evidence(item) for item in ids}
 
 
 def compare(*, latency=8, accuracy=11, evidence_value=None, invariant=True):
@@ -70,11 +93,28 @@ def test_missing_failed_or_unadmitted_evidence_is_unknown() -> None:
     missing = evidence("inv", "latency")
     assert compare(evidence_value=missing)["classification"] == "UNKNOWN"
     failed = evidence("inv", "latency", "accuracy")
-    failed["accuracy"]["result"] = "FAIL"
+    failed["accuracy"]["receipt"]["result"] = "CONTRADICTED"
     assert compare(evidence_value=failed)["classification"] == "UNKNOWN"
     unadmitted = evidence("inv", "latency", "accuracy")
     unadmitted["accuracy"]["check_id"] = "caller_says_so"
     assert compare(evidence_value=unadmitted)["classification"] == "UNKNOWN"
+
+
+def test_fabricated_pass_envelope_is_unknown() -> None:
+    fabricated = evidence("inv", "latency", "accuracy")
+    fabricated["accuracy"] = {
+        "check_id": "source_sha256_equals", "check_version": 1,
+        "result": "PASS", "receipt_sha256": "0" * 64,
+    }
+    result = compare(evidence_value=fabricated)
+    assert result["classification"] == "UNKNOWN"
+    assert result["unknown_reasons"] == ["evidence_set_not_exact", "measure_evidence_incomplete:accuracy"]
+
+
+def test_receipt_cannot_be_rebound_to_different_presented_bytes() -> None:
+    rebound = evidence("inv", "latency", "accuracy")
+    rebound["accuracy"]["observed_bytes_hex"] = b"other".hex()
+    assert compare(evidence_value=rebound)["classification"] == "UNKNOWN"
 
 
 def test_extra_evidence_is_not_silently_ignored() -> None:
