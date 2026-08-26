@@ -46,6 +46,11 @@ from free_valid_ai.directional_comparator import (
     compare_directional,
     verify_directional_comparison,
 )
+from free_valid_ai.output_gate import (
+    OutputGateError,
+    gate_is_caller_independent,
+    run_verified_model_call,
+)
 
 __all__ = [
     "ClaimContractError",
@@ -59,6 +64,7 @@ __all__ = [
     "FrozenCheckIndexError",
     "DirectionalComparatorError",
     "COMPARISONS",
+    "OutputGateError",
     "admitted_check",
     "assess_claim",
     "create_claim",
@@ -69,7 +75,9 @@ __all__ = [
     "create_admitted_check",
     "create_frozen_check_index",
     "compare_directional",
+    "gate_is_caller_independent",
     "verify_directional_comparison",
+    "run_verified_model_call",
     "extend_frozen_check_index",
     "relation",
     "parse_mirrored_review",
