@@ -7,6 +7,8 @@ import json
 from numbers import Real
 from typing import Any, Iterable, Mapping
 
+from .checks import run_json_pointer_check, run_source_sha256_check
+from .claims import ClaimContractError
 from .frozen_index import admitted_check, verify_frozen_check_index
 
 
@@ -62,19 +64,46 @@ def _evidence_status(
             return False, used
         item = evidence[evidence_id]
         if not isinstance(item, Mapping) or set(item) != {
-            "check_id", "check_version", "result", "receipt_sha256"
+            "check_id", "check_version", "claim", "observed_bytes_hex", "receipt"
         }:
             return False, used
         admitted = admitted_check(
             frozen_index, item["check_id"], item["check_version"]
         )
-        digest = item["receipt_sha256"]
+        if admitted is None:
+            return False, used
+        receipt = item["receipt"]
+        if not isinstance(receipt, Mapping):
+            return False, used
+        encoded = item["observed_bytes_hex"]
+        if not isinstance(encoded, str):
+            return False, used
+        try:
+            observed = bytes.fromhex(encoded)
+        except ValueError:
+            return False, used
+        if receipt.get("sequence") != 1 or receipt.get("previous_receipt_hash") is not None:
+            return False, used
+        runners = {
+            "source_sha256_equals": run_source_sha256_check,
+            "json_pointer_equals": run_json_pointer_check,
+        }
+        runner = runners.get(item["check_id"])
+        if runner is None:
+            return False, used
+        try:
+            rebuilt = runner(
+                claim=item["claim"], verifier_id=receipt["verifier_id"],
+                observed_at=receipt["observed_at"], observed_bytes=observed,
+            )
+        except (ClaimContractError, KeyError, TypeError, ValueError):
+            return False, used
+        if rebuilt != dict(receipt):
+            return False, used
         if (
-            admitted is None
-            or item["result"] != "PASS"
-            or not isinstance(digest, str)
-            or len(digest) != 64
-            or any(character not in "0123456789abcdef" for character in digest)
+            receipt["result"] != "HELD"
+            or receipt["method"]["method_id"] != admitted["procedure_id"]
+            or receipt["method"]["procedure_sha256"] != admitted["procedure_sha256"]
         ):
             return False, used
         used.append(evidence_id)
