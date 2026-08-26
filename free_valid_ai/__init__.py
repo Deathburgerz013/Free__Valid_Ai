@@ -40,6 +40,12 @@ from free_valid_ai.frozen_index import (
     verify_admitted_check,
     verify_frozen_check_index,
 )
+from free_valid_ai.directional_comparator import (
+    COMPARISONS,
+    DirectionalComparatorError,
+    compare_directional,
+    verify_directional_comparison,
+)
 
 __all__ = [
     "ClaimContractError",
@@ -51,6 +57,8 @@ __all__ = [
     "MIRRORED_REVIEW_SCHEMA_SHA256",
     "DEFAULT_FROZEN_CHECK_INDEX",
     "FrozenCheckIndexError",
+    "DirectionalComparatorError",
+    "COMPARISONS",
     "admitted_check",
     "assess_claim",
     "create_claim",
@@ -60,6 +68,8 @@ __all__ = [
     "create_verification_receipt",
     "create_admitted_check",
     "create_frozen_check_index",
+    "compare_directional",
+    "verify_directional_comparison",
     "extend_frozen_check_index",
     "relation",
     "parse_mirrored_review",
