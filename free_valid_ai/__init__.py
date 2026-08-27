@@ -70,6 +70,14 @@ from free_valid_ai.runtime_envelope import (
     build_runtime_envelope,
     verify_runtime_envelope,
 )
+from free_valid_ai.missing_observation import (
+    AFFECTED_SCOPES,
+    COVERAGE_RESULTS,
+    MissingObservationError,
+    assess_missing_observations,
+    missing_observation_assessment_is_caller_independent,
+    verify_missing_observation_assessment,
+)
 
 __all__ = [
     "ClaimContractError",
@@ -90,6 +98,9 @@ __all__ = [
     "ConsequenceGateError",
     "CONSEQUENCE_DECISIONS",
     "RuntimeEnvelopeError",
+    "MissingObservationError",
+    "AFFECTED_SCOPES",
+    "COVERAGE_RESULTS",
     "admitted_check",
     "assess_claim",
     "assess_possibility",
@@ -123,4 +134,7 @@ __all__ = [
     "verify_frozen_check_index",
     "build_runtime_envelope",
     "verify_runtime_envelope",
+    "assess_missing_observations",
+    "missing_observation_assessment_is_caller_independent",
+    "verify_missing_observation_assessment",
 ]
