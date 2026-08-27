@@ -58,6 +58,13 @@ from free_valid_ai.possibility import (
     assess_possibility,
     verify_possibility_assessment,
 )
+from free_valid_ai.consequence_gate import (
+    CONSEQUENCE_DECISIONS,
+    ConsequenceGateError,
+    assess_consequences,
+    consequence_gate_is_caller_independent,
+    verify_consequence_gate,
+)
 
 __all__ = [
     "ClaimContractError",
@@ -75,9 +82,12 @@ __all__ = [
     "PossibilityAssessmentError",
     "ASSESSMENTS",
     "CONSTRAINT_KINDS",
+    "ConsequenceGateError",
+    "CONSEQUENCE_DECISIONS",
     "admitted_check",
     "assess_claim",
     "assess_possibility",
+    "assess_consequences",
     "create_claim",
     "create_semantic_contract",
     "create_interception",
@@ -87,6 +97,8 @@ __all__ = [
     "create_frozen_check_index",
     "compare_directional",
     "gate_is_caller_independent",
+    "consequence_gate_is_caller_independent",
+    "verify_consequence_gate",
     "verify_directional_comparison",
     "run_verified_model_call",
     "extend_frozen_check_index",
