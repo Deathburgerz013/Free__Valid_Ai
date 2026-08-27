@@ -38,9 +38,12 @@ def _raw(assessment="CLEAN", issues=None):
     return json.dumps({"assessment": assessment, "issues": issues or []})
 
 
+ENVELOPE = "RUNTIME_ENVELOPE_TEST\nassistant_execution_authority=NONE"
+
+
 def test_clean_review_releases_unchanged_with_mirrored_receipt() -> None:
     transport = FakeTransport(["draft", _raw()])
-    session = ChatSession("carrier", transport, mirrored_review=True)
+    session = ChatSession("carrier", transport, ENVELOPE, mirrored_review=True)
     assert session.ask("question") == "draft"
     audit = session.last_turn_audit
     assert len(transport.calls) == 2
@@ -51,7 +54,7 @@ def test_clean_review_releases_unchanged_with_mirrored_receipt() -> None:
 
 def test_review_uses_bound_structured_transport_when_available() -> None:
     transport = StructuredFakeTransport(["draft", _raw()])
-    session = ChatSession("carrier", transport, mirrored_review=True)
+    session = ChatSession("carrier", transport, ENVELOPE, mirrored_review=True)
     assert session.ask("question") == "draft"
     assert transport.schemas == [MIRRORED_REVIEW_SCHEMA]
     assert session.last_turn_audit["review"]["review_schema_sha256"] == MIRRORED_REVIEW_SCHEMA_SHA256
@@ -77,7 +80,7 @@ def test_required_correction_gets_exactly_one_correction_call() -> None:
     transport = FakeTransport([
         "wrong", _raw("CORRECTION_REQUIRED", ["unsupported runtime claim"]), "correct",
     ])
-    session = ChatSession("carrier", transport, mirrored_review=True)
+    session = ChatSession("carrier", transport, ENVELOPE, mirrored_review=True)
     assert session.ask("question") == "correct"
     assert len(transport.calls) == 3
     assert session.last_turn_audit["interception"]["decision"] == "CORRECTED"
@@ -86,7 +89,9 @@ def test_required_correction_gets_exactly_one_correction_call() -> None:
 
 @pytest.mark.parametrize("raw", ["not json", "{}", '{"assessment":"CLEAN","issues":["x"]}'])
 def test_malformed_review_is_unknown_and_never_releases(raw: str) -> None:
-    session = ChatSession("carrier", FakeTransport(["draft", raw]), mirrored_review=True)
+    session = ChatSession(
+        "carrier", FakeTransport(["draft", raw]), ENVELOPE, mirrored_review=True
+    )
     with pytest.raises(LocalModelError, match="UNKNOWN"):
         session.ask("question")
     assert session.last_turn_audit["interception"]["decision"] == "UNKNOWN"
@@ -96,7 +101,7 @@ def test_malformed_review_is_unknown_and_never_releases(raw: str) -> None:
 def test_explicit_unknown_never_releases() -> None:
     session = ChatSession(
         "carrier", FakeTransport(["draft", _raw("UNKNOWN", ["insufficient context"])]),
-        mirrored_review=True,
+        ENVELOPE, mirrored_review=True,
     )
     with pytest.raises(LocalModelError, match="UNKNOWN"):
         session.ask("question")
@@ -108,7 +113,7 @@ def test_empty_or_unchanged_correction_is_blocked(correction: str) -> None:
     session = ChatSession(
         "carrier",
         FakeTransport(["wrong", _raw("CORRECTION_REQUIRED", ["issue"]), correction]),
-        mirrored_review=True,
+        ENVELOPE, mirrored_review=True,
     )
     with pytest.raises(LocalModelError, match="deterministic"):
         session.ask("question")
@@ -133,7 +138,7 @@ def test_review_receipt_tamper_fails() -> None:
 
 def test_exit_makes_zero_model_calls_with_review_enabled() -> None:
     transport = FakeTransport([])
-    session = ChatSession("carrier", transport, mirrored_review=True)
+    session = ChatSession("carrier", transport, ENVELOPE, mirrored_review=True)
     assert run_chat(session, input_fn=lambda _: "/exit", output_fn=lambda _: None) == 0
     assert transport.calls == []
 
@@ -146,7 +151,7 @@ def test_cli_enables_review_by_default_and_allows_explicit_disable() -> None:
 
 def test_received_turn_chain_advances_only_after_released_answer() -> None:
     transport = FakeTransport(["one", _raw(), "two", _raw()])
-    session = ChatSession("carrier", transport, mirrored_review=True)
+    session = ChatSession("carrier", transport, ENVELOPE, mirrored_review=True)
     session.ask("first")
     first = session.previous_received_turn_hash
     session.ask("second")

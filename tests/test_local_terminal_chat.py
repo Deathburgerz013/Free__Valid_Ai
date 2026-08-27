@@ -20,12 +20,16 @@ class FakeTransport:
         return next(self.replies)
 
 
+ENVELOPE = "RUNTIME_ENVELOPE_TEST\nassistant_write_authority=NONE"
+
+
 def test_conversation_carries_prior_turns() -> None:
     transport = FakeTransport(["hello", "still here"])
-    session = ChatSession("local-test", transport)
+    session = ChatSession("local-test", transport, ENVELOPE)
     assert session.ask("Hi") == "hello"
     assert session.ask("Again?") == "still here"
     assert transport.calls[1][1] == [
+        {"role": "system", "content": ENVELOPE},
         {"role": "user", "content": "Hi"},
         {"role": "assistant", "content": "hello"},
         {"role": "user", "content": "Again?"},
@@ -54,6 +58,16 @@ def test_runtime_envelope_precedes_every_conversation_turn() -> None:
     )
     assert "cloud_service_claim=FALSE_FOR_THIS_RUNTIME" in envelope
     assert "execution_selection=CPU_ONLY" in envelope
+
+
+def test_missing_or_blank_runtime_envelope_stops_before_transport() -> None:
+    transport = FakeTransport(["must not be called"])
+    with pytest.raises(TypeError):
+        ChatSession("local-test", transport)
+    for value in ("", "   ", None, b"not text"):
+        with pytest.raises(ValueError, match="runtime envelope"):
+            ChatSession("local-test", transport, value)
+    assert transport.calls == []
 
 
 @pytest.mark.parametrize(
@@ -119,7 +133,7 @@ def test_structured_ollama_request_binds_format_schema(monkeypatch) -> None:
 def test_terminal_exits_without_persistence() -> None:
     inputs = iter(["hello", "/exit"])
     output = []
-    session = ChatSession("local-test", FakeTransport(["hi"]))
+    session = ChatSession("local-test", FakeTransport(["hi"]), ENVELOPE)
     assert run_chat(session, input_fn=lambda _: next(inputs), output_fn=output.append) == 0
     assert any(line == "Assistant write authority: NONE" for line in output)
     assert any(line == "Assistant execution authority: NONE" for line in output)
