@@ -51,6 +51,13 @@ from free_valid_ai.output_gate import (
     gate_is_caller_independent,
     run_verified_model_call,
 )
+from free_valid_ai.possibility import (
+    ASSESSMENTS,
+    CONSTRAINT_KINDS,
+    PossibilityAssessmentError,
+    assess_possibility,
+    verify_possibility_assessment,
+)
 
 __all__ = [
     "ClaimContractError",
@@ -65,8 +72,12 @@ __all__ = [
     "DirectionalComparatorError",
     "COMPARISONS",
     "OutputGateError",
+    "PossibilityAssessmentError",
+    "ASSESSMENTS",
+    "CONSTRAINT_KINDS",
     "admitted_check",
     "assess_claim",
+    "assess_possibility",
     "create_claim",
     "create_semantic_contract",
     "create_interception",
@@ -89,6 +100,7 @@ __all__ = [
     "verify_received_turn",
     "verify_mirrored_review",
     "verify_verification_receipt",
+    "verify_possibility_assessment",
     "verify_admitted_check",
     "verify_frozen_check_index",
 ]
