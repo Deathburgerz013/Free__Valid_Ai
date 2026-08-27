@@ -65,6 +65,11 @@ from free_valid_ai.consequence_gate import (
     consequence_gate_is_caller_independent,
     verify_consequence_gate,
 )
+from free_valid_ai.runtime_envelope import (
+    RuntimeEnvelopeError,
+    build_runtime_envelope,
+    verify_runtime_envelope,
+)
 
 __all__ = [
     "ClaimContractError",
@@ -84,6 +89,7 @@ __all__ = [
     "CONSTRAINT_KINDS",
     "ConsequenceGateError",
     "CONSEQUENCE_DECISIONS",
+    "RuntimeEnvelopeError",
     "admitted_check",
     "assess_claim",
     "assess_possibility",
@@ -115,4 +121,6 @@ __all__ = [
     "verify_possibility_assessment",
     "verify_admitted_check",
     "verify_frozen_check_index",
+    "build_runtime_envelope",
+    "verify_runtime_envelope",
 ]

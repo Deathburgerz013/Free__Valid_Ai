@@ -14,6 +14,7 @@ from .mirrored_review import (
     parse_mirrored_review,
 )
 from .turn_boundary import create_interception, create_received_turn
+from .runtime_envelope import verify_runtime_envelope
 
 
 Input = Callable[[str], str]
@@ -33,8 +34,7 @@ class ChatSession:
     last_turn_audit: dict | None = None
 
     def __post_init__(self) -> None:
-        if not isinstance(self.runtime_envelope, str) or not self.runtime_envelope.strip():
-            raise ValueError("runtime envelope must be a non-empty string")
+        verify_runtime_envelope(self.runtime_envelope, expected_model=self.model)
 
     def ask(self, text: str) -> str:
         if not text.strip():

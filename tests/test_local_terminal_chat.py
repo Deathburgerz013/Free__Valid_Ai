@@ -20,7 +20,9 @@ class FakeTransport:
         return next(self.replies)
 
 
-ENVELOPE = "RUNTIME_ENVELOPE_TEST\nassistant_write_authority=NONE"
+ENVELOPE = build_runtime_envelope(
+    model="local-test", endpoint="http://127.0.0.1:11434/api/chat", num_gpu=0
+)
 
 
 def test_conversation_carries_prior_turns() -> None:
@@ -49,15 +51,26 @@ def test_runtime_envelope_precedes_every_conversation_turn() -> None:
     for _, messages in transport.calls:
         assert messages[0] == {"role": "system", "content": envelope}
         assert messages.count({"role": "system", "content": envelope}) == 1
-    assert "assistant_identity=Simulator" in envelope
-    assert "model_carrier=local-test" in envelope
-    assert "assistant_write_authority=NONE" in envelope
-    assert "user_authority=NOT_ASSESSED" in envelope
-    assert "write_authority=NONE" not in envelope.replace(
-        "assistant_write_authority=NONE", ""
+    assert '"assistant_identity":"Simulator"' in envelope
+    assert '"model_carrier":"local-test"' in envelope
+    assert '"assistant_write_authority":"NONE"' in envelope
+    assert '"user_authority":"NOT_ASSESSED"' in envelope
+    assert '"write_authority":"NONE"' not in envelope.replace(
+        '"assistant_write_authority":"NONE"', ""
     )
-    assert "cloud_service_claim=FALSE_FOR_THIS_RUNTIME" in envelope
-    assert "execution_selection=CPU_ONLY" in envelope
+    assert '"cloud_service_claim":false' in envelope
+    assert '"execution_selection":"CPU_ONLY"' in envelope
+
+
+def test_altered_or_rebound_runtime_envelope_stops_before_transport() -> None:
+    transport = FakeTransport(["must not be called"])
+    altered = ENVELOPE.replace('"assistant_write_authority":"NONE"',
+                                '"assistant_write_authority":"SOME"')
+    with pytest.raises(ValueError, match="envelope"):
+        ChatSession("local-test", transport, altered)
+    with pytest.raises(ValueError, match="model_carrier_mismatch"):
+        ChatSession("different-model", transport, ENVELOPE)
+    assert transport.calls == []
 
 
 def test_missing_or_blank_runtime_envelope_stops_before_transport() -> None:
@@ -65,7 +78,7 @@ def test_missing_or_blank_runtime_envelope_stops_before_transport() -> None:
     with pytest.raises(TypeError):
         ChatSession("local-test", transport)
     for value in ("", "   ", None, b"not text"):
-        with pytest.raises(ValueError, match="runtime envelope"):
+        with pytest.raises(ValueError, match="runtime_envelope"):
             ChatSession("local-test", transport, value)
     assert transport.calls == []
 
