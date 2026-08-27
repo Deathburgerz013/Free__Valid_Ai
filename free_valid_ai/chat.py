@@ -24,13 +24,17 @@ Output = Callable[[str], None]
 class ChatSession:
     model: str
     transport: ChatTransport
+    runtime_envelope: str
     assistant_name: str = "Simulator"
-    runtime_envelope: str | None = None
     mirrored_review: bool = False
     messages: list[dict[str, str]] = field(default_factory=list)
     previous_received_turn_hash: str | None = None
     turn_sequence: int = 0
     last_turn_audit: dict | None = None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.runtime_envelope, str) or not self.runtime_envelope.strip():
+            raise ValueError("runtime envelope must be a non-empty string")
 
     def ask(self, text: str) -> str:
         if not text.strip():
@@ -39,9 +43,9 @@ class ChatSession:
             text.encode("utf-8"), role="USER", sequence=self.turn_sequence,
             previous_received_turn_hash=self.previous_received_turn_hash,
         )
-        proposed: list[dict[str, str]] = []
-        if self.runtime_envelope is not None:
-            proposed.append({"role": "system", "content": self.runtime_envelope})
+        proposed: list[dict[str, str]] = [
+            {"role": "system", "content": self.runtime_envelope}
+        ]
         proposed.extend(self.messages)
         proposed.append({"role": "user", "content": text})
         draft = self.transport.chat(self.model, proposed)
@@ -62,9 +66,9 @@ class ChatSession:
         review_prompt = json.dumps(
             {"received_turn_hash": received["received_turn_hash"],
              "question": question, "draft": draft}, sort_keys=True)
-        review_messages = []
-        if self.runtime_envelope is not None:
-            review_messages.append({"role": "system", "content": self.runtime_envelope})
+        review_messages = [
+            {"role": "system", "content": self.runtime_envelope}
+        ]
         review_messages.extend([
             {"role": "system", "content": (
                 "MIRRORED_REVIEW_V1. You are the same model carrier, not an independent "
@@ -109,11 +113,9 @@ class ChatSession:
         else:
             correction_prompt = json.dumps(
                 {"question": question, "draft": draft, "review": review}, sort_keys=True)
-            correction_messages = []
-            if self.runtime_envelope is not None:
-                correction_messages.append(
-                    {"role": "system", "content": self.runtime_envelope}
-                )
+            correction_messages = [
+                {"role": "system", "content": self.runtime_envelope}
+            ]
             correction_messages.extend([
                 {"role": "system", "content": (
                     "BOUNDED_CORRECTION_V1. Apply only the listed issues. Return only the "
