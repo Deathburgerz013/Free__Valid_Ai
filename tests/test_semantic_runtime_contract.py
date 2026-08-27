@@ -69,6 +69,6 @@ def test_runtime_envelope_binds_verified_semantic_contract() -> None:
         endpoint="http://127.0.0.1:11434/api/chat",
         num_gpu=0,
     )
-    assert "semantic_contract_version=1" in envelope
-    assert f"semantic_contract_hash={DEFAULT_SEMANTIC_CONTRACT['contract_hash']}" in envelope
-    assert "semantic_interpretation_policy=EXACT" in envelope
+    assert '"semantic_contract_version":1' in envelope
+    assert f'"semantic_contract_hash":"{DEFAULT_SEMANTIC_CONTRACT["contract_hash"]}"' in envelope
+    assert '"semantic_interpretation_policy":"EXACT"' in envelope

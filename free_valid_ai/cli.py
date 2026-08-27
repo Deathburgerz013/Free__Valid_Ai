@@ -7,34 +7,7 @@ from collections.abc import Sequence
 
 from .chat import ChatSession, run_chat
 from .local_model import OllamaTransport
-from .semantics import DEFAULT_SEMANTIC_CONTRACT, verify_semantic_contract
-
-
-def build_runtime_envelope(*, model: str, endpoint: str, num_gpu: int) -> str:
-    execution = "CPU_ONLY" if num_gpu == 0 else f"GPU_LAYERS_{num_gpu}"
-    semantics = verify_semantic_contract(DEFAULT_SEMANTIC_CONTRACT)
-    return "\n".join(
-        (
-            "RUNTIME_ENVELOPE_V1",
-            "These facts are supplied by the local program, not inferred by the model.",
-            f"semantic_contract_version={semantics['version']}",
-            f"semantic_contract_hash={semantics['contract_hash']}",
-            "semantic_interpretation_policy=EXACT",
-            "assistant_identity=Simulator",
-            f"model_carrier={model}",
-            "identity_rule=The assistant is Simulator; the model carrier is replaceable.",
-            "transport=LOCAL_OLLAMA",
-            f"transport_endpoint={endpoint}",
-            "transport_scope=LOOPBACK_ONLY",
-            f"execution_selection={execution}",
-            "assistant_write_authority=NONE",
-            "assistant_execution_authority=NONE",
-            "user_authority=NOT_ASSESSED",
-            "cloud_service_claim=FALSE_FOR_THIS_RUNTIME",
-            "Speak as Simulator. Use the model name only to identify the carrier.",
-            "Do not claim cloud execution or assign assistant restrictions to the user.",
-        )
-    )
+from .runtime_envelope import build_runtime_envelope
 
 
 def build_parser() -> argparse.ArgumentParser:

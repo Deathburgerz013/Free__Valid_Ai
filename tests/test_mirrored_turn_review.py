@@ -6,7 +6,7 @@ import json
 import pytest
 
 from free_valid_ai.chat import ChatSession, run_chat
-from free_valid_ai.cli import build_parser
+from free_valid_ai.cli import build_parser, build_runtime_envelope
 from free_valid_ai.local_model import LocalModelError
 from free_valid_ai.mirrored_review import (
     MIRRORED_REVIEW_SCHEMA, MIRRORED_REVIEW_SCHEMA_SHA256,
@@ -38,7 +38,9 @@ def _raw(assessment="CLEAN", issues=None):
     return json.dumps({"assessment": assessment, "issues": issues or []})
 
 
-ENVELOPE = "RUNTIME_ENVELOPE_TEST\nassistant_execution_authority=NONE"
+ENVELOPE = build_runtime_envelope(
+    model="carrier", endpoint="http://127.0.0.1:11434/api/chat", num_gpu=0
+)
 
 
 def test_clean_review_releases_unchanged_with_mirrored_receipt() -> None:
@@ -61,7 +63,7 @@ def test_review_uses_bound_structured_transport_when_available() -> None:
 
 
 def test_runtime_envelope_is_presented_to_review_and_correction() -> None:
-    envelope = "RUNTIME_ENVELOPE_TEST"
+    envelope = ENVELOPE
     transport = StructuredFakeTransport([
         "wrong", _raw("CORRECTION_REQUIRED", ["runtime mismatch"]), "correct",
     ])
